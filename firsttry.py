@@ -10,6 +10,7 @@ import skimage.io as io
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import matplotlib.pyplot as plt
 import torchvision.transforms.functional as TF
 from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
@@ -132,10 +133,21 @@ optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 criterion = nn.CrossEntropyLoss()
 #nn.BCEWithLogitsLoss()
 
+def my_plot(epochs, loss1, loss2):
+    fig = plt.figure()
+    plt.plot(epochs, loss1)
+    
+    plt.plot(epochs, loss2)
+    fig.savefig('temp.png', dpi=fig.dpi)
+    
 n_iter = 2
-for epoch in range(2):  # loop over the dataset multiple times
-
+loss_vals_train =  []
+loss_vals_val = []
+num_epochs = 40
+for epoch in range(num_epochs):  # loop over the dataset multiple times
     running_loss = 0.0
+    epoch_loss_train = []
+    epoch_loss_val = []
     for i, data in enumerate(train_dl, 0):
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data
@@ -150,12 +162,38 @@ for epoch in range(2):  # loop over the dataset multiple times
         writer.add_scalar("loss/train", loss, epoch)
         loss.backward()
         optimizer.step()
-
+        epoch_loss_train.append(loss.item())
         # print statistics
         running_loss += loss.item()
         if i % n_iter == n_iter-1 :    # print every 2000 mini-batches
             print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / n_iter:.3f}')
             running_loss = 0.0
+    
+    loss_vals_train.append(sum(epoch_loss_train)/len(epoch_loss_train))
+    for i, data in enumerate(valid_dl, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+        # zero the parameter gradients
+        optimizer.zero_grad()
 
+        # forward + backward + optimize
+        outputs = model(inputs)
+        loss = criterion(outputs, labels.reshape(-1, 128, 128))
+        writer.add_scalar("loss/train", loss, epoch)
+        loss.backward()
+        optimizer.step()
+        epoch_loss_val.append(loss.item())
+        # print statistics
+        running_loss += loss.item()
+        if i % n_iter == n_iter-1 :    # print every 2000 mini-batches
+            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / n_iter:.3f}')
+            running_loss = 0.0
+    
+    loss_vals_val.append(sum(epoch_loss_val)/len(epoch_loss_val))
+    PATH_MODEL = f"models/entire_model_{epoch}.pt"
+    torch.save(model, PATH_MODEL)
+my_plot(np.linspace(1, num_epochs, num_epochs).astype(int), loss_vals_train, loss_vals_val)
 print('Finished Training')
 writer.flush()
