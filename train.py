@@ -374,14 +374,15 @@ class CustomDataLoader(tf.keras.utils.Sequence):
 if __name__ == "__main__":
     image_size = 128 
     epochs = 10
-    batch_size = 8
+    batch_size = 2
     input_shape = (512, 512, 3)
     model = UNet(input_shape = (512,512,3))
     model.compile(optimizer = tf.keras.optimizers.Adam(lr = 1e-4),run_eagerly=True, loss = 'binary_crossentropy', metrics = ['accuracy'])
     base_lr = 0.02
-    train_ds = CustomDataLoader(annFile='../fiftyone/coco-2017/train/labels.json', image_dir='../fiftyone/coco-2017/train/data/', mask_dir='mask_train_2017', categories=['person'], batch_size=8, prefix='COCO_train2017_')
-    val_ds = CustomDataLoader(annFile='../fiftyone/coco-2017/validation/labels.json', image_dir='../fiftyone/coco-2017/validation/data/', mask_dir='mask_val_2017', categories=['person'], batch_size=8, prefix='COCO_val2017_')
-    train_steps =  len(os.listdir( "../fiftyone/coco-2017/train/data/"))/ 8
+    catogories = ['person','bicycle','car','motorcycle']
+    train_ds = CustomDataLoader(annFile='../fiftyone/coco-2017/train/labels.json', image_dir='../fiftyone/coco-2017/train/data/', mask_dir='mask_train_2017', categories=catogories, batch_size=batch_size, prefix='COCO_train2017_')
+    val_ds = CustomDataLoader(annFile='../fiftyone/coco-2017/validation/labels.json', image_dir='../fiftyone/coco-2017/validation/data/', mask_dir='mask_val_2017', categories=catogories, batch_size=batch_size, prefix='COCO_val2017_')
+    train_steps =  len(os.listdir( "../fiftyone/coco-2017/train/data/"))/ batch_size
     model.fit_generator(train_ds , validation_data = val_ds , steps_per_epoch = train_steps , epochs=epochs)
 
     
