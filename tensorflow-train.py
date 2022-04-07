@@ -168,12 +168,8 @@ model_history = model.fit(train_dataset, epochs=3,
                           steps_per_epoch=STEPS_PER_EPOCH,
                           validation_steps=VALIDATION_STEPS,
                           validation_data=test_dataset,
-                          callbacks=[DisplayCallback(), logger, model_check])
+                          callbacks=[logger, model_check])
 
-loss = model_history.history['loss']
-val_loss = model_history.history['val_loss']
-
-epochs = range(EPOCHS)
 '''
 plt.figure(figsize = (10, 8)) 
 plt.plot(epochs, loss, 'r', label='Training loss')
